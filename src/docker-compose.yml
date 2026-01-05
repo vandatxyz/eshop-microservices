@@ -52,12 +52,27 @@ services:
       context: .
       dockerfile: WebApps/Shopping.Web/Dockerfile
 
+  notification:
+    image: ${DOCKER_REGISTRY-}notification
+    build:
+      context: .
+      dockerfile: Services/Notification/Dockerfile
+
+  search:
+    image: ${DOCKER_REGISTRY-}search
+    build:
+      context: .
+      dockerfile: Services/Search/Dockerfile
+
+  elasticsearch:
+    image: elasticsearch:8.11.1
+
+  kibana:
+    image: kibana:8.11.1
+
 volumes:
   postgres_catalog:
   postgres_basket:
-
-
-
-
+  elasticsearch_data:
 
 

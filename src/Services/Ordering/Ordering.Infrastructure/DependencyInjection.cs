@@ -1,7 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using Ordering.Application.Data;
+using BuildingBlocks.Messaging.MassTransit;
+using MassTransit;
+using System.Reflection;
 
 namespace Ordering.Infrastructure;
 public static class DependencyInjection
@@ -22,6 +26,16 @@ public static class DependencyInjection
         });
 
         services.AddScoped<IApplicationDbContext, ApplicationDbContext>();
+              
+        services.AddMessageBroker(configuration, Assembly.GetExecutingAssembly(), config =>
+        {
+            config.AddEntityFrameworkOutbox<ApplicationDbContext>(o =>
+            {
+                o.QueryDelay = TimeSpan.FromSeconds(1);
+                o.UseSqlServer();
+                o.UseBusOutbox();
+            });
+        });
 
         return services;
     }
