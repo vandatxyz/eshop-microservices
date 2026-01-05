@@ -1,6 +1,7 @@
 ﻿using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using RabbitMQ.Client;
 using System.Reflection;
 
 namespace BuildingBlocks.Messaging.MassTransit;
@@ -25,6 +26,9 @@ public static class Extentions
                     host.Username(configuration["MessageBroker:UserName"]);
                     host.Password(configuration["MessageBroker:Password"]);
                 });
+
+                configurator.Publish<BuildingBlocks.Messaging.Events.OrderCreatedEvent>(x => x.ExchangeType = ExchangeType.Topic);
+
                 configurator.ConfigureEndpoints(context);
             });
         });
