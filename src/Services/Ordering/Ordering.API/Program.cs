@@ -21,4 +21,6 @@ if (app.Environment.IsDevelopment())
     await app.InitialiseDatabaseAsync();
 }
 
+app.MapGet("/health/version", () => Results.Ok(new { Service = "Ordering.API", Hostname = Environment.MachineName, Timestamp = DateTime.UtcNow }));
+
 app.Run();

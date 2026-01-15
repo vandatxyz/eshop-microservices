@@ -70,4 +70,6 @@ app.UseHealthChecks("/health",
         ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
     });
 
+app.MapGet("/health/version", () => Results.Ok(new { Service = "Basket.API", Hostname = Environment.MachineName, Timestamp = DateTime.UtcNow }));
+
 app.Run();

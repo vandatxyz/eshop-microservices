@@ -52,6 +52,7 @@ services:
   catalog.api.blue:
     image: registry.biluxan.online/eshop/catalogapi:latest
     container_name: catalog.api.blue
+    hostname: catalog-blue
     build:
       context: .
       dockerfile: Services/Catalog/Catalog.API/Dockerfile
@@ -66,6 +67,7 @@ services:
   catalog.api.green:
     image: registry.biluxan.online/eshop/catalogapi:latest
     container_name: catalog.api.green
+    hostname: catalog-green
     build:
       context: .
       dockerfile: Services/Catalog/Catalog.API/Dockerfile
@@ -80,6 +82,7 @@ services:
   basket.api.blue:
     image: registry.biluxan.online/eshop/basketapi:latest
     container_name: basket.api.blue
+    hostname: basket-blue
     build:
       context: .
       dockerfile: Services/Basket/Basket.API/Dockerfile
@@ -102,6 +105,7 @@ services:
   basket.api.green:
     image: registry.biluxan.online/eshop/basketapi:latest
     container_name: basket.api.green
+    hostname: basket-green
     build:
       context: .
       dockerfile: Services/Basket/Basket.API/Dockerfile
@@ -124,6 +128,7 @@ services:
   discount.grpc:
     image: registry.biluxan.online/eshop/discountgrpc:latest
     container_name: discount.grpc
+    hostname: discount-service
     build:
       context: .
       dockerfile: Services/Discount/Discount.Grpc/Dockerfile
@@ -138,6 +143,7 @@ services:
   ordering.api.blue:
     image: registry.biluxan.online/eshop/orderingapi:latest
     container_name: ordering.api.blue
+    hostname: ordering-blue
     build:
       context: .
       dockerfile: Services/Ordering/Ordering.API/Dockerfile
@@ -157,6 +163,7 @@ services:
   ordering.api.green:
     image: registry.biluxan.online/eshop/orderingapi:latest
     container_name: ordering.api.green
+    hostname: ordering-green
     build:
       context: .
       dockerfile: Services/Ordering/Ordering.API/Dockerfile
