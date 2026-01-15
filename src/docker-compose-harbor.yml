@@ -2,7 +2,6 @@ version: '3.4'
 
 services:
   catalogdb:
-    # Đã sửa: Trỏ về Harbor eshop/postgres
     image: registry.biluxan.online/eshop/postgres:15-alpine
     container_name: catalogdb
     environment:
@@ -14,7 +13,6 @@ services:
       - postgres_catalog:/var/lib/postgresql/data/
 
   basketdb:
-    # Đã sửa: Trỏ về Harbor eshop/postgres
     image: registry.biluxan.online/eshop/postgres:15-alpine
     container_name: basketdb
     environment:
@@ -26,13 +24,11 @@ services:
       - postgres_basket:/var/lib/postgresql/data/
 
   distributedcache:
-    # Đã sửa: Trỏ về Harbor eshop/redis
     image: registry.biluxan.online/eshop/redis:7-alpine
     container_name: distributedcache
     restart: always
 
   orderdb:
-    # Đã sửa: Trỏ về Harbor eshop/mcr.microsoft.com/mssql/server (theo tên trong ảnh)
     image: registry.biluxan.online/eshop/mcr.microsoft.com/mssql/server:2022-latest
     container_name: orderdb
     environment:
@@ -43,7 +39,6 @@ services:
       - mssql_order:/var/opt/mssql
 
   messagebroker:
-    # Đã sửa: Trỏ về Harbor eshop/rabbitmq
     image: registry.biluxan.online/eshop/rabbitmq:3.13-management-alpine
     container_name: messagebroker
     hostname: ecommerce-mq
@@ -54,9 +49,9 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
 
-  catalog.api:
-    # Đã sửa: Trỏ về Harbor eshop/catalogapi
+  catalog.api.blue:
     image: registry.biluxan.online/eshop/catalogapi:latest
+    container_name: catalog.api.blue
     build:
       context: .
       dockerfile: Services/Catalog/Catalog.API/Dockerfile
@@ -68,9 +63,45 @@ services:
       - catalogdb
     restart: always
 
-  basket.api:
-    # Đã sửa: Trỏ về Harbor eshop/basketapi
+  catalog.api.green:
+    image: registry.biluxan.online/eshop/catalogapi:latest
+    container_name: catalog.api.green
+    build:
+      context: .
+      dockerfile: Services/Catalog/Catalog.API/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ConnectionStrings__Database=Server=catalogdb;Port=5432;Database=CatalogDb;User Id=postgres;Password=postgres;Include Error Detail=true
+    depends_on:
+      - catalogdb
+    restart: always
+
+  basket.api.blue:
     image: registry.biluxan.online/eshop/basketapi:latest
+    container_name: basket.api.blue
+    build:
+      context: .
+      dockerfile: Services/Basket/Basket.API/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ConnectionStrings__Database=Server=basketdb;Port=5432;Database=BasketDb;User Id=postgres;Password=postgres;Include Error Detail=true
+      - ConnectionStrings__Redis=distributedcache:6379
+      - GrpcSettings__DiscountUrl=http://discount.grpc:8080
+      - MessageBroker__Host=amqp://ecommerce-mq:5672
+      - MessageBroker__UserName=guest
+      - MessageBroker__Password=guest
+    depends_on:
+      - basketdb
+      - distributedcache
+      - discount.grpc
+      - messagebroker
+    restart: always
+
+  basket.api.green:
+    image: registry.biluxan.online/eshop/basketapi:latest
+    container_name: basket.api.green
     build:
       context: .
       dockerfile: Services/Basket/Basket.API/Dockerfile
@@ -91,8 +122,8 @@ services:
     restart: always
 
   discount.grpc:
-    # Đã sửa: Trỏ về Harbor eshop/discountgrpc
     image: registry.biluxan.online/eshop/discountgrpc:latest
+    container_name: discount.grpc
     build:
       context: .
       dockerfile: Services/Discount/Discount.Grpc/Dockerfile
@@ -104,9 +135,28 @@ services:
       - discount_data:/data
     restart: always
 
-  ordering.api:
-    # Đã sửa: Trỏ về Harbor eshop/orderingapi
+  ordering.api.blue:
     image: registry.biluxan.online/eshop/orderingapi:latest
+    container_name: ordering.api.blue
+    build:
+      context: .
+      dockerfile: Services/Ordering/Ordering.API/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ConnectionStrings__Database=Server=orderdb;Database=OrderDb;User Id=sa;Password=SwN12345678;Encrypt=False;TrustServerCertificate=True
+      - MessageBroker__Host=amqp://ecommerce-mq:5672
+      - MessageBroker__UserName=guest
+      - MessageBroker__Password=guest
+      - FeatureManagement__OrderFullfilment=false
+    depends_on:
+      - orderdb
+      - messagebroker
+    restart: always
+
+  ordering.api.green:
+    image: registry.biluxan.online/eshop/orderingapi:latest
+    container_name: ordering.api.green
     build:
       context: .
       dockerfile: Services/Ordering/Ordering.API/Dockerfile
@@ -124,7 +174,6 @@ services:
     restart: always
 
   yarpapigateway:
-    # Đã sửa: Trỏ về Harbor eshop/yarpapigateway
     image: registry.biluxan.online/eshop/yarpapigateway:latest
     build:
       context: .
@@ -133,16 +182,18 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_HTTP_PORTS=8080
     depends_on:
-      - catalog.api
-      - basket.api
-      - ordering.api
+      - catalog.api.blue
+      - basket.api.blue
+      - ordering.api.blue
     ports:
       - "8080:8080"
+    volumes:
+      - ./ApiGateways/YarpApiGateway/appsettings.json:/app/appsettings.json
     restart: always
 
-  shopping.web:
-    # Đã sửa: Trỏ về Harbor eshop/shoppingweb
+  shopping.web.blue:
     image: registry.biluxan.online/eshop/shoppingweb:latest
+    container_name: shopping.web.blue
     build:
       context: .
       dockerfile: WebApps/Shopping.Web/Dockerfile
@@ -152,8 +203,32 @@ services:
       - ApiSettings__GatewayAddress=http://yarpapigateway:8080
     depends_on:
       - yarpapigateway
+    restart: always
+
+  shopping.web.green:
+    image: registry.biluxan.online/eshop/shoppingweb:latest
+    container_name: shopping.web.green
+    build:
+      context: .
+      dockerfile: WebApps/Shopping.Web/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ApiSettings__GatewayAddress=http://yarpapigateway:8080
+    depends_on:
+      - yarpapigateway
+    restart: always
+
+  nginx:
+    image: registry.biluxan.online/eshop/nginx:latest
+    container_name: gateway_nginx
     ports:
-      - "80:8080"
+      - "80:80"
+    volumes:
+      - ./Nginx/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - shopping.web.blue
+      - shopping.web.green
     restart: always
 
 volumes:
